@@ -5,19 +5,18 @@ window.SCOPD_SITE = {
     arxiv: '',    // e.g. 'https://arxiv.org/abs/2610.12345'
     code: '',     // e.g. 'https://github.com/armenjeddi/scopd-code'
     hfPaper: '',  // e.g. 'https://huggingface.co/papers/2610.12345'
-    models: '',   // e.g. 'https://huggingface.co/collections/<org>/scopd'
   },
 
   // Affiliation numbers refer to the `affiliations` list below (1-based).
   // `bib` is the BibTeX form of the name ("Last, First").
   authors: [
     { name: 'Ahmadreza Jeddi', bib: 'Jeddi, Ahmadreza', url: 'https://armenjeddi.github.io/', affiliations: [1, 2], equal: true },
-    { name: 'Enming Zhang', bib: 'Zhang, Enming', url: 'https://github.com/Enmingzz', affiliations: [1, 2], equal: true },
+    { name: 'Enming Zhang', bib: 'Zhang, Enming', url: 'https://www.linkedin.com/in/enming-z-326a30356/', affiliations: [1, 2], equal: true },
     { name: 'Jasper Gerigk', bib: 'Gerigk, Jasper', url: 'https://jaspergerigk.com/', affiliations: [1, 2] },
     { name: 'Hakki Karaimer', bib: 'Karaimer, Hakki', url: 'https://karaimer.github.io/', affiliations: [3] },
     { name: 'Mozhgan Nasr Azadani', bib: 'Nasr Azadani, Mozhgan', url: 'https://mozhgan91.github.io/', affiliations: [4, 5] },
     { name: 'Jiayun Luo', bib: 'Luo, Jiayun', url: 'https://sites.google.com/view/jiayunluo/jiayun-luo-letitia', affiliations: [6, 2] },
-    { name: 'Minh Ngoc Le', bib: 'Le, Minh Ngoc', url: '', affiliations: [1] },
+    { name: 'Minh Ngoc Le', bib: 'Le, Minh Ngoc', url: 'https://www.linkedin.com/in/nm-le/', affiliations: [1] },
     { name: 'Gholamali Aminian', bib: 'Aminian, Gholamali', url: 'https://gholamaliaminian.github.io/', affiliations: [7] },
     { name: 'Hugo Buurmeijer', bib: 'Buurmeijer, Hugo', url: 'https://stanfordasl.github.io/people/hugo-buurmeijer/', affiliations: [4] },
     { name: 'Yongchao Chen', bib: 'Chen, Yongchao', url: 'https://yongchao98.github.io/YongchaoChen/', affiliations: [8] },

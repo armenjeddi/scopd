@@ -10,7 +10,7 @@ A static site with no build step. GitHub Pages serves the `main` branch root dir
 
 | What | Where |
 | --- | --- |
-| arXiv, code, Hugging Face and model links | `links` in `site.config.js`. An empty string shows a greyed-out "Soon" button. Setting `arxiv` also fills the arXiv ID into the BibTeX. |
+| arXiv, code and Hugging Face links | `links` in `site.config.js`. An empty string shows a greyed-out "Soon" button. Setting `arxiv` also fills the arXiv ID into the BibTeX. |
 | Authors, homepages, affiliations | `authors` / `affiliations` in `site.config.js` |
 | Page text | `index.html` |
 | Result numbers (Tables 1 and 2) | `results.data.js` |
