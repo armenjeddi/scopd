@@ -23,3 +23,13 @@ window.SCOPD_RESULTS = {
     },
   },
 };
+
+// Transcribed from Table 2 (Avg6, 10% retention). Selective variants distill 10% of response tokens.
+window.SCOPD_SELECTION = [
+  { name: 'Least sensitive', score: 89.13 },
+  { name: 'Random', score: 93.56 },
+  { name: 'TIP', score: 94.21 },
+  { name: 'Dense (all tokens)', score: 94.44 },
+  { name: 'Top teacher–student KL', score: 94.51 },
+  { name: 'Visual sensitivity (SCOPD+)', score: 95.25, ours: true },
+];

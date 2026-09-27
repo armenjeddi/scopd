@@ -4,138 +4,186 @@
   const data = window.SCOPD_RESULTS;
   const select = (selector) => document.querySelector(selector);
   const selectAll = (selector) => [...document.querySelectorAll(selector)];
+  const el = (tag, className, text) => {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  };
 
-  // No fetch or build step: opening index.html directly also works.
-  function publicUrl(value, local = false) {
+  function publicUrl(value) {
     if (typeof value !== 'string' || !value.trim()) return null;
     try {
       const url = new URL(value, document.baseURI);
       if (['https:', 'http:'].includes(url.protocol)) return url.href;
-      if (local && url.protocol === 'file:') return url.href;
-    } catch { /* Incomplete metadata is simply omitted. */ }
+    } catch { /* Invalid URLs are treated as missing. */ }
     return null;
   }
+  const external = (link, href) => { link.href = href; link.target = '_blank'; link.rel = 'noopener noreferrer'; };
 
-  const paperUrl = publicUrl(config.paperUrl, true);
-  if (paperUrl) selectAll('[data-paper-link]').forEach((link) => { link.href = paperUrl; });
-  for (const [key, selector] of [['arxivUrl', '#arxiv-link'], ['codeUrl', '#code-link']]) {
-    const url = publicUrl(config[key]);
-    if (!url) continue;
-    const link = select(selector);
-    link.href = url;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    link.hidden = false;
-  }
-  const arxivMatch = publicUrl(config.arxivUrl)?.match(/^https?:\/\/arxiv\.org\/abs\/(\d{4}\.\d{4,5}(?:v\d+)?)(?:[?#].*)?$/);
-  if (arxivMatch) select('#publication-label').textContent = 'ARXIV PREPRINT';
-
-  const authors = Array.isArray(config.authors) ? config.authors.filter((author) => author && typeof author.name === 'string' && author.name.trim()) : [];
-  if (authors.length) {
-    const affiliations = Array.isArray(config.affiliations) ? config.affiliations : [];
-    select('#author-block').hidden = false;
-    for (const author of authors) {
-      const wrapper = document.createElement('span');
-      wrapper.className = 'author';
-      const url = publicUrl(author.url);
-      const name = document.createElement(url ? 'a' : 'span');
-      name.textContent = author.name;
-      if (url) { name.href = url; name.target = '_blank'; name.rel = 'noopener noreferrer'; }
-      wrapper.append(name);
-      const indices = Array.isArray(author.affiliations) ? author.affiliations.filter((index) => Number.isInteger(index) && index > 0 && index <= affiliations.length) : [];
-      if (indices.length) {
-        const superscript = document.createElement('sup');
-        superscript.textContent = indices.join(',');
-        wrapper.append(superscript);
-      }
-      select('#authors').append(wrapper);
+  // Resource buttons: live when a URL is configured, otherwise a "Soon" placeholder.
+  const links = config.links || {};
+  selectAll('[data-link]').forEach((button) => {
+    const url = publicUrl(links[button.dataset.link]);
+    if (url) {
+      external(button, url);
+      button.querySelector('.soon')?.remove();
+    } else {
+      button.classList.add('is-placeholder');
+      button.setAttribute('aria-disabled', 'true');
+      button.title = 'Coming soon';
     }
-    affiliations.forEach((affiliation, index) => {
-      const span = document.createElement('span');
-      span.className = 'affiliation';
-      const superscript = document.createElement('sup');
-      superscript.textContent = String(index + 1);
-      span.append(superscript, document.createTextNode(` ${affiliation}`));
-      select('#affiliations').append(span);
-    });
-  }
+  });
 
-  // A citation is only exposed once actual publication metadata is available.
-  if (authors.length && arxivMatch && /^\d{4}$/.test(String(config.year))) {
-    const bibEscape = (value) => String(value).replace(/([{}&%_$#])/g, '\\$1');
-    const key = String(config.citationKey || 'scopd').replace(/[^a-zA-Z0-9:_-]/g, '');
-    const citation = `@misc{${key || 'scopd'},\n  title = {SCOPD: Sparse-Context On-Policy Self-Distillation for Efficient Vision-Language Models},\n  author = {${authors.map((author) => bibEscape(author.name)).join(' and ')}},\n  year = {${config.year}},\n  eprint = {${arxivMatch[1]}},\n  archivePrefix = {arXiv},\n  url = {https://arxiv.org/abs/${arxivMatch[1]}}\n}`;
-    select('#bibtex').textContent = citation;
-    select('#citation').hidden = false;
-    select('#copy-citation').addEventListener('click', async () => {
-      try {
-        await navigator.clipboard.writeText(citation);
-        select('#copy-status').textContent = 'BibTeX copied to clipboard.';
-      } catch {
-        const range = document.createRange();
-        range.selectNodeContents(select('#bibtex'));
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(range);
-        select('#copy-status').textContent = 'Citation selected. Press Ctrl+C (or ⌘C) to copy.';
-      }
-    });
-  }
+  // Authors and affiliations.
+  const authors = (config.authors || []).filter((author) => author?.name);
+  const affiliations = config.affiliations || [];
+  authors.forEach((author) => {
+    const item = el('li', 'author');
+    const url = publicUrl(author.url);
+    const name = el(url ? 'a' : 'span', null, author.name);
+    if (url) external(name, url);
+    item.append(name);
+    const marks = [...(author.affiliations || [])].sort((a, b) => a - b).join(',') + (author.equal ? '*' : '');
+    if (marks) item.append(el('sup', null, marks));
+    select('#authors').append(item);
+  });
+  affiliations.forEach((affiliation, index) => {
+    const item = el('li', 'affiliation');
+    item.append(el('sup', null, String(index + 1)), document.createTextNode(affiliation));
+    select('#affiliations').append(item);
+  });
+  if (!authors.some((author) => author.equal)) select('.equal-note').hidden = true;
 
+  // BibTeX. Uses the arXiv id once `links.arxiv` is set; a placeholder until then.
+  const arxivId = publicUrl(links.arxiv)?.match(/arxiv\.org\/(?:abs|pdf)\/(\d{4}\.\d{4,5})/)?.[1];
+  const citation = [
+    `@article{${config.citationKey || 'scopd'},`,
+    '  title   = {SCOPD: Sparse-Context On-Policy Self-Distillation for Efficient Vision-Language Models},',
+    `  author  = {${authors.map((author) => author.bib || author.name).join(' and ')}},`,
+    `  journal = {arXiv preprint arXiv:${arxivId || 'XXXX.XXXXX'}},`,
+    `  year    = {${config.year || ''}}`,
+    '}',
+  ].join('\n');
+  select('#bibtex').textContent = citation;
+  select('#copy-citation').addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(citation);
+      select('#copy-status').textContent = 'Copied to clipboard.';
+    } catch {
+      const range = document.createRange();
+      range.selectNodeContents(select('#bibtex'));
+      getSelection().removeAllRanges();
+      getSelection().addRange(range);
+      select('#copy-status').textContent = 'Selected. Press Ctrl+C (⌘C) to copy.';
+    }
+  });
+
+  // Schematic token grids in the teaser.
   const retainedTokens = new Set([4, 17, 23, 38, 42, 55, 61, 76, 88, 93]);
   selectAll('.token-grid').forEach((grid) => {
-    const fragment = document.createDocumentFragment();
-    for (let index = 0; index < 100; index++) {
-      const token = document.createElement('i');
-      if (retainedTokens.has(index)) token.className = 'retained';
-      fragment.append(token);
-    }
-    grid.append(fragment);
+    for (let index = 0; index < 100; index++) grid.append(el('i', retainedTokens.has(index) ? 'retained' : null));
   });
+
+  // Dot plot: position encodes the score on a shared axis, so a zoomed axis is honest.
+  function dotPlot(container, rowSpecs, { min, max, ticks, reference }) {
+    const x = (value) => `${((value - min) / (max - min)) * 100}%`;
+    const layer = el('div', 'dp-layer');
+    ticks.forEach((tick) => {
+      const line = el('span', tick === reference ? 'dp-grid dp-reference' : 'dp-grid');
+      line.style.left = x(tick);
+      layer.append(line);
+    });
+    const axis = el('div', 'dp-axis');
+    ticks.forEach((tick) => {
+      const label = el('span', null, tick === reference ? `${tick} = unpruned` : String(tick));
+      label.style.left = x(tick);
+      axis.append(label);
+    });
+    const rows = new Map();
+    rowSpecs.forEach(({ key, label, className }) => {
+      const row = el('div', `dp-row ${className || ''}`);
+      const track = el('div', 'dp-track');
+      const dot = el('span', 'dp-dot');
+      track.append(dot);
+      const value = el('span', 'dp-value');
+      row.append(el('span', 'dp-name', label), track, value);
+      container.append(row);
+      rows.set(key, { dot, value, row });
+    });
+    container.append(layer, axis);
+    return (values, deltas = {}) => {
+      rows.forEach(({ dot, value, row }, key) => {
+        dot.style.left = x(values[key]);
+        value.replaceChildren(document.createTextNode(values[key].toFixed(2)));
+        if (deltas[key] !== undefined) value.append(el('small', null, `${deltas[key] >= 0 ? '+' : '−'}${Math.abs(deltas[key]).toFixed(2)}`));
+        row.title = `${row.querySelector('.dp-name').textContent}: ${values[key].toFixed(2)}`;
+      });
+    };
+  }
+
+  // Main results.
+  const methods = [
+    { key: 'Vanilla', label: 'Base model' },
+    { key: 'SFT', label: 'SFT' },
+    { key: 'EPIC', label: 'EPIC' },
+    { key: 'GRPO', label: 'GRPO' },
+    { key: 'SCOPD', label: 'SCOPD', className: 'dp-scopd' },
+    { key: 'SCOPD+', label: 'SCOPD+', className: 'dp-ours' },
+  ];
+  const updateResults = dotPlot(select('#results-chart'), methods, { min: 83, max: 102, ticks: [85, 90, 95, 100], reference: 100 });
 
   function renderResults(budget) {
     const result = data?.budgets[budget];
     if (!result) return;
     selectAll('[data-budget]').forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.budget === budget)));
-    selectAll('.result-row').forEach((row) => {
-      const score = result.aggregate[row.dataset.method];
-      row.querySelector('.result-track > span').style.setProperty('--score', `${score / 105 * 100}%`);
-      row.querySelector('strong').textContent = score.toFixed(2);
-    });
-    select('#results-chart').setAttribute('aria-label', `Aggregate results at ${budget}% visual-token retention`);
-    const delta = (result.aggregate['SCOPD+'] - result.aggregate.Vanilla).toFixed(2);
-    const highlight = document.createElement('strong');
-    highlight.textContent = `+${delta} points`;
-    select('#result-summary').replaceChildren(highlight, document.createTextNode(` over Vanilla at ${budget}% visual-token retention.${budget === '100' ? ' The main benefit emerges under sparse visual context.' : ''}`));
+    const base = result.aggregate.Vanilla;
+    const deltas = Object.fromEntries(methods.slice(1).map(({ key }) => [key, result.aggregate[key] - base]));
+    updateResults(result.aggregate, deltas);
+    select('#results-chart').setAttribute('aria-label', `Normalized scores at ${budget}% visual tokens. ${methods.map(({ key, label }) => `${label} ${result.aggregate[key].toFixed(2)}`).join(', ')}.`);
+
+    const gain = (result.aggregate['SCOPD+'] - base).toFixed(2);
+    select('#result-summary').textContent = budget === '100'
+      ? 'With all tokens, every method stays near 100: SCOPD adapts the model to sparse context rather than acting as generic post-training.'
+      : `At ${budget}% of visual tokens, SCOPD+ adds +${gain} points over the base model and beats every post-training baseline. Numbers beside each score are the change vs. the base model.`;
+
     const body = select('#benchmark-table tbody');
     body.replaceChildren();
     data.benchmarks.forEach((name, index) => {
-      const row = document.createElement('tr');
-      const heading = document.createElement('th');
+      const row = el('tr');
+      const heading = el('th', null, name);
       heading.scope = 'row';
-      heading.textContent = name;
       row.append(heading);
       const values = [data.reference[index], result.Vanilla[index], result.SCOPD[index], result['SCOPD+'][index]];
+      const best = Math.max(...values.slice(1));
       values.forEach((value, column) => {
-        const cell = document.createElement('td');
-        cell.textContent = value.toFixed(2);
-        if (column > 0 && value === Math.max(...values.slice(1))) cell.style.fontWeight = '700';
+        const cell = el('td', column > 0 && value === best ? 'best' : null, value.toFixed(2));
         row.append(cell);
       });
       body.append(row);
     });
-    select('#table-description').textContent = `Raw benchmark scores at ${budget}% visual-token retention. The full-context Vanilla reference is shown for comparison. Bold indicates the best score among the three methods at this budget.`;
+    select('#table-description').textContent = `Raw scores at ${budget}% visual tokens; bold marks the best of the three models at this budget. Table 1.`;
   }
   selectAll('[data-budget]').forEach((button) => button.addEventListener('click', () => renderResults(button.dataset.budget)));
   renderResults('10');
 
+  // Token-selection ablation.
+  const selection = window.SCOPD_SELECTION || [];
+  const updateSelection = dotPlot(
+    select('#selection-chart'),
+    selection.map((row) => ({ key: row.name, label: row.name, className: row.ours ? 'dp-ours' : '' })),
+    { min: 88, max: 96, ticks: [88, 90, 92, 94, 96] },
+  );
+  updateSelection(Object.fromEntries(selection.map((row) => [row.name, row.score])));
+
+  // Figure lightbox.
   const dialog = select('#figure-dialog');
   if (typeof dialog.showModal === 'function') {
     selectAll('[data-zoom]').forEach((link) => link.addEventListener('click', (event) => {
       event.preventDefault();
-      const image = link.querySelector('img');
-      dialog.querySelector('img').src = link.href;
-      dialog.querySelector('img').alt = image.alt;
+      const image = dialog.querySelector('img');
+      image.src = link.href;
+      image.alt = link.querySelector('img').alt;
       dialog.showModal();
       document.body.classList.add('dialog-open');
     }));
@@ -144,6 +192,7 @@
     dialog.addEventListener('close', () => document.body.classList.remove('dialog-open'));
   }
 
+  // Highlight the nav entry for the section in view.
   if ('IntersectionObserver' in window) {
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
