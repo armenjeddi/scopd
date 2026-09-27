@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#fafbf9">
+  <title>SCOPD: Sparse-Context On-Policy Self-Distillation for Efficient Vision-Language Models</title>
+  <meta name="description" content="SCOPD adapts vision-language models to sparse visual context. SCOPD+ retains 92.43% of normalized performance across 13 image benchmarks with only 10% of visual tokens.">
+  <meta property="og:title" content="SCOPD — Learning to reason with less visual context">
+  <meta property="og:description" content="Sparse-context on-policy self-distillation for efficient vision-language models. 10% visual tokens. 92.43% normalized performance.">
+  <meta property="og:type" content="website">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="stylesheet" href="styles.css">
+  <script src="site.config.js" defer></script>
+  <script src="results.data.js" defer></script>
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="nav-wrap">
+      <a class="wordmark" href="#" aria-label="SCOPD home"><img src="assets/favicon.svg" alt="" width="25" height="25">SCOPD<span class="wordmark-plus">+</span></a>
+      <nav aria-label="Main navigation">
+        <a href="#overview">Overview</a><a href="#method">Method</a><a href="#results">Results</a>
+        <a class="nav-paper" href="assets/paper/scopd.pdf" data-paper-link>Paper <span aria-hidden="true">↗</span></a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero container" aria-labelledby="paper-title">
+      <div class="eyebrow"><span class="status-dot"></span> VISION-LANGUAGE MODELS <span class="eyebrow-divider">/</span> <span id="publication-label">RESEARCH PREPRINT</span></div>
+      <h1 id="paper-title"><span class="title-acronym">SCOPD</span><span class="title-expanded">Sparse-Context On-Policy Self-Distillation<br class="desktop-break"> for Efficient Vision-Language Models</span></h1>
+      <div id="author-block" class="author-block" hidden><p id="authors"></p><p id="affiliations"></p></div>
+      <p class="hero-summary">Prune the visual tokens.<br class="mobile-break"> <strong>Learn to use what remains.</strong></p>
+      <p class="hero-description">Recovering reasoning ability in sparse visual contexts<br class="desktop-break"> through on-policy self-distillation.</p>
+      <div class="hero-actions">
+        <a class="button button-primary" href="assets/paper/scopd.pdf" data-paper-link><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8zM14 3v5h5M8 12h8M8 16h6"/></svg>Read the paper <span class="button-tag">PDF</span></a>
+        <a id="arxiv-link" class="button button-secondary" hidden>arXiv <span aria-hidden="true">↗</span></a>
+        <a id="code-link" class="button button-secondary" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 6-6 6 6 6m8-12 6 6-6 6m-3-15-2 18"/></svg>Code <span aria-hidden="true">↗</span></a>
+        <a class="button button-secondary" href="#results">Explore results <span aria-hidden="true">↓</span></a>
+      </div>
+
+      <div class="teaser" aria-label="SCOPD+ result at ten percent visual-token retention">
+        <div class="teaser-visual">
+          <div class="mini-label">THE VISUAL CONTEXT</div>
+          <div class="token-flow" aria-hidden="true"><div class="token-grid full-grid"></div><span class="flow-arrow">→</span><div class="token-grid sparse-grid"></div></div>
+          <div class="token-labels"><span>Full context <b>100%</b></span><span>Sparse context <b>10%</b></span></div>
+          <p>Less visual input. More reason to adapt.</p>
+        </div>
+        <div class="teaser-result">
+          <div class="mini-label">PERFORMANCE AT 10% VISUAL TOKENS</div>
+          <div class="teaser-bar"><div><span>Pruning only</span><strong>86.37<span>%</span></strong></div><div class="bar-track"><span style="--value:86.37%;" class="fill-baseline"></span></div></div>
+          <div class="teaser-bar"><div><span>With SCOPD+</span><strong class="accent-text">92.43<span>%</span></strong></div><div class="bar-track"><span style="--value:92.43%;" class="fill-ours"></span></div></div>
+          <p>Normalized mean over 13 image benchmarks.<br>Full-context Vanilla model = 100%.</p>
+        </div>
+      </div>
+      <p class="teaser-caption">SCOPD+ learns to use the evidence that survives pruning. Token grids are schematic; scores are from Table 1.</p>
+      <div class="headline-stats">
+        <div><strong>90<span>%</span></strong><p>fewer visual tokens</p></div>
+        <div><strong>92.43<span>%</span></strong><p>normalized performance retained</p></div>
+        <div><strong>+6.06<span> pts</span></strong><p>over pruning without adaptation</p></div>
+      </div>
+      <p class="stat-context">Qwen2.5-VL-7B-Instruct · VisionZip · 10% retention · 13 image benchmarks</p>
+    </section>
+
+    <section class="section section-tinted" id="overview" aria-labelledby="overview-title">
+      <div class="container reading-width">
+        <div class="section-kicker">01 / OVERVIEW</div>
+        <h2 id="overview-title">What if the evidence is still there?</h2>
+        <p class="section-lead">Pruning can remove information. It can also make surviving information harder for a model to use.</p>
+        <div class="abstract-text">
+          <p>Reasoning vision-language models process images and videos as long sequences of visual tokens, making inference expensive. Training-free pruning reduces this cost, but performance drops under aggressive compression. Our fixed-context Pass@K analysis shows that correct reasoning can still be recovered from the <em>same</em> pruned visual representation. We call this the <strong>representation–utilization gap</strong>.</p>
+          <p>We introduce <strong>SCOPD</strong>, a sparse-context on-policy self-distillation framework. A student generates reasoning trajectories from pruned visual tokens, while a privileged full-context teacher supervises those same prefixes. <strong>SCOPD+</strong> goes further: a small visual-budget intervention identifies the reasoning positions most sensitive to visual evidence, and distillation focuses on those positions.</p>
+          <p>At 10% visual-token retention, SCOPD+ improves the normalized mean across 13 image benchmarks from 86.37% to <strong>92.43%</strong>. The approach requires no ground-truth responses, architectural changes, or additional inference-time model computation.</p>
+        </div>
+        <div class="takeaway"><span aria-hidden="true">↳</span><p>Efficient VLMs depend on <strong>which visual tokens remain</strong> and <strong>how reliably the model uses them</strong>.</p></div>
+      </div>
+    </section>
+
+    <section class="section container" aria-labelledby="insight-title">
+      <div class="section-heading"><div class="section-kicker">02 / THE KEY OBSERVATION</div><h2 id="insight-title">Retained evidence. Untapped reasoning.</h2><p class="section-lead">Different reasoning trajectories, the exact same sparse visual context.</p></div>
+      <figure class="paper-figure">
+        <a href="assets/figures/representation-utilization-gap.png" class="figure-zoom" data-zoom aria-label="Enlarge the representation–utilization gap figure"><img src="assets/figures/representation-utilization-gap.png" alt="Fixed-context sampling recovers correct reasoning: success increases from 53.2% with greedy decoding to 79.6% at Pass@64, while a language-only control stays near zero. A radar plot compares SCOPD+ with pruning only across 13 image benchmarks." width="1616" height="872" loading="lazy"><span class="zoom-hint" aria-hidden="true">↗ Enlarge figure</span></a>
+        <figcaption><strong>The representation–utilization gap.</strong> On 500 free-form numerical examples solved greedily by the unpruned model, VisionZip at 10% retention achieves 53.2% greedy success but 79.6% Pass@64. The visual tokens remain fixed across samples. The language-only control rises only from 2.8% to 4.2%. Figure 1.</figcaption>
+      </figure>
+      <div class="insight-note"><span class="note-label">THE IMPLICATION</span><p>Repeated sampling reveals recoverable capability. SCOPD trains the model to use sparse evidence more reliably during inference.</p></div>
+    </section>
+
+    <section class="section section-tinted" id="method" aria-labelledby="method-title">
+      <div class="container">
+        <div class="section-heading"><div class="section-kicker">03 / METHOD</div><h2 id="method-title">Learn from a fuller view.</h2><p class="section-lead">Sparse-context reasoning. Full-context supervision.</p></div>
+        <div class="method-steps">
+          <article><span class="step-number">1</span><h3>Generate with less</h3><p>The student samples its own reasoning trajectory using only the retained visual tokens.</p><span class="step-meta">On-policy · sparse context</span></article>
+          <article><span class="step-number">2</span><h3>Teach with more</h3><p>An EMA teacher sees the full visual context and scores the same student-generated prefixes.</p><span class="step-meta">SCOPD · full-context teacher</span></article>
+          <article><span class="step-number">3</span><h3>Focus on what matters</h3><p>A small increase in visual context reveals sensitive positions. SCOPD+ distills the top 10%.</p><span class="step-meta">SCOPD+ · selective supervision</span></article>
+        </div>
+        <figure class="paper-figure">
+          <a href="assets/figures/scopd-pipeline.png" class="figure-zoom" data-zoom aria-label="Enlarge the SCOPD+ method figure"><img src="assets/figures/scopd-pipeline.png" alt="SCOPD+ pipeline: a full-context teacher and sparse-context student score the same prefixes. An intervened student receives slightly more visual context. Jensen–Shannon divergence between the student distributions selects the response positions for teacher-to-student distillation." width="1616" height="596" loading="lazy"><span class="zoom-hint" aria-hidden="true">↗ Enlarge figure</span></a>
+          <figcaption><strong>Visual sensitivity guides supervision.</strong> SCOPD+ compares student predictions at budgets <i>b</i> and <i>b</i> + δ, then applies teacher-to-student KL loss only at the most sensitive response positions. Default: <i>b</i> = 10%, δ = 1 percentage point, ρ = 10%. Figure 2.</figcaption>
+        </figure>
+        <div class="method-footnotes"><span><span class="check" aria-hidden="true">✓</span> No ground-truth responses</span><span><span class="check" aria-hidden="true">✓</span> No architectural changes</span><span><span class="check" aria-hidden="true">✓</span> No added inference-time model computation</span></div>
+      </div>
+    </section>
+
+    <section class="section container" id="results" aria-labelledby="results-title">
+      <div class="section-heading"><div class="section-kicker">04 / RESULTS</div><h2 id="results-title">Better use of a smaller context.</h2><p class="section-lead">Explore the trade-off across visual-token budgets.</p></div>
+      <div class="results-panel">
+        <div class="results-toolbar"><div><h3>13 image benchmarks</h3><p>Qwen2.5-VL-7B-Instruct · VisionZip</p></div><div class="budget-control" role="group" aria-label="Visual-token retention"><button type="button" data-budget="10" aria-pressed="true">10% <span>tokens</span></button><button type="button" data-budget="20" aria-pressed="false">20% <span>tokens</span></button><button type="button" data-budget="100" aria-pressed="false">100% <span>tokens</span></button></div></div>
+        <div class="chart-header"><span>Normalized mean performance (Avg13)</span><span>Higher is better ↑</span></div>
+        <div class="results-chart" id="results-chart" aria-label="Aggregate results at ten percent token retention">
+          <div class="result-row" data-method="Vanilla"><span class="result-name">Vanilla</span><div class="result-track"><span style="--score:82.2571%"></span></div><strong>86.37</strong></div>
+          <div class="result-row" data-method="SFT"><span class="result-name">SFT</span><div class="result-track"><span style="--score:84.5905%"></span></div><strong>88.82</strong></div>
+          <div class="result-row" data-method="EPIC"><span class="result-name">EPIC</span><div class="result-track"><span style="--score:82.3333%"></span></div><strong>86.45</strong></div>
+          <div class="result-row" data-method="GRPO"><span class="result-name">GRPO</span><div class="result-track"><span style="--score:81.6476%"></span></div><strong>85.73</strong></div>
+          <div class="result-row row-scopd" data-method="SCOPD"><span class="result-name">SCOPD</span><div class="result-track"><span style="--score:86.1810%"></span></div><strong>90.49</strong></div>
+          <div class="result-row row-plus" data-method="SCOPD+"><span class="result-name">SCOPD+ <span class="ours-tag">OURS</span></span><div class="result-track"><span style="--score:88.0286%"></span></div><strong>92.43</strong></div>
+          <div class="chart-axis" aria-hidden="true"><span>0</span><span>25</span><span>50</span><span>75</span><span>100</span></div>
+        </div>
+        <div class="result-summary" id="result-summary" role="status" aria-live="polite"><strong>+6.06 points</strong> over Vanilla at 10% visual-token retention.</div>
+        <p class="metric-note">Each benchmark is normalized to the unpruned Vanilla model, then averaged. A score of 100 matches that reference; this is not raw accuracy. Source: Table 1.</p>
+      </div>
+      <details class="benchmark-details"><summary>View individual benchmark scores <span aria-hidden="true">+</span></summary><p class="table-description" id="table-description">Raw benchmark scores at 10% visual-token retention. The full-context Vanilla reference is shown for comparison.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Individual benchmark results"><table id="benchmark-table"><caption class="sr-only">Scores across 13 image benchmarks</caption><thead><tr><th scope="col">Benchmark</th><th scope="col">Full-context<br>Vanilla</th><th scope="col">Vanilla</th><th scope="col">SCOPD</th><th scope="col">SCOPD+</th></tr></thead><tbody></tbody></table></div></details>
+      <noscript><p>The chart shows results at 10% retention. Enable JavaScript to switch budgets and view per-benchmark scores, or see Table 1 in the <a href="assets/paper/scopd.pdf">paper</a>.</p></noscript>
+    </section>
+
+    <section class="section section-tinted" aria-labelledby="transfer-title">
+      <div class="container">
+        <div class="section-heading"><div class="section-kicker">05 / GENERALIZATION</div><h2 id="transfer-title">Beyond one pruning setup.</h2><p class="section-lead">Sparse-context adaptation transfers across pruners and from images to video.</p></div>
+        <div class="transfer-grid">
+          <article class="transfer-card"><span class="card-category">OTHER PRUNERS</span><h3>Train once.<br> Change the pruner.</h3><p>Trained with VisionZip, SCOPD+ improves all four tested pruning operators without further adaptation.</p><div class="transfer-values"><span>DivPrune · Avg6</span><div>83.47 <span aria-hidden="true">→</span> <strong>91.23</strong></div></div><p class="card-source">Vanilla → SCOPD+ · Table 3</p></article>
+          <article class="transfer-card"><span class="card-category">ANOTHER MODEL FAMILY</span><h3>The same idea.<br> A different VLM.</h3><p>Post-training Qwen3-VL-4B with the same sparse-context setup also improves performance under pruning.</p><div class="transfer-values"><span>Qwen3-VL-4B · Avg6</span><div>75.29 <span aria-hidden="true">→</span> <strong>82.92</strong></div></div><p class="card-source">Vanilla → SCOPD+ · Table 4</p></article>
+          <article class="transfer-card"><span class="card-category">IMAGE → VIDEO</span><h3>Learn on images.<br> Transfer to video.</h3><p>Image-only adaptation improves five video benchmarks, with no video-specific post-training.</p><div class="transfer-values"><span>Video benchmarks · Avg5</span><div>90.88 <span aria-hidden="true">→</span> <strong>96.60</strong></div></div><p class="card-source">Vanilla → SCOPD+ · Table 5</p></article>
+        </div>
+        <p class="transfer-note">All comparisons use 10% visual-token retention. Avg6 and Avg5 are normalized means over different benchmark sets and should be read separately from Avg13.</p>
+      </div>
+    </section>
+
+    <section class="section container reading-width" id="citation" hidden aria-labelledby="citation-title"><div class="section-heading"><div class="section-kicker">CITATION</div><h2 id="citation-title">Cite this work</h2></div><div class="citation-box"><button type="button" class="copy-button" id="copy-citation">Copy BibTeX</button><pre><code id="bibtex"></code></pre></div><p id="copy-status" class="copy-status" role="status" aria-live="polite"></p></section>
+    <section class="closing container"><span class="closing-mark" aria-hidden="true">SCOPD<span>+</span></span><h2>Smaller context.<br>More capable reasoning.</h2><a class="button button-primary" href="assets/paper/scopd.pdf" data-paper-link>Read the paper <span aria-hidden="true">↗</span></a></section>
+  </main>
+
+  <footer class="site-footer container"><p>SCOPD · Sparse-Context On-Policy Self-Distillation</p><p>Layout inspired by <a href="https://snap-research.github.io/ac3d/" target="_blank" rel="noopener noreferrer">AC3D <span aria-hidden="true">↗</span></a></p></footer>
+  <dialog class="figure-dialog" id="figure-dialog" aria-label="Enlarged paper figure"><button type="button" class="dialog-close" autofocus aria-label="Close enlarged figure">✕</button><img src="assets/figures/representation-utilization-gap.png" alt=""><p>Press Escape or click outside the figure to close.</p></dialog>
+</body>
+</html>
