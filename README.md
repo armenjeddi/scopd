@@ -1,32 +1,34 @@
-# SCOPD 项目主页
+# SCOPD Project Page
 
-基于论文内容制作的英文静态项目页，包含方法图、交互式实验结果、原始分数表和预印本 PDF。无需安装前端依赖或运行构建命令，可直接部署到 GitHub Pages。
+A static project page for SCOPD, featuring method figures, interactive experimental results, per-benchmark scores, and a preprint PDF. No frontend dependencies or build step are required. The site can be deployed directly to GitHub Pages.
 
-## 本地预览
+**Live site:** [enmingzz.github.io/scopd](https://enmingzz.github.io/scopd/)
 
-在项目目录运行：
+## Local Preview
+
+Run the following command from the project directory:
 
 ```sh
 python -m http.server 8000
 ```
 
-浏览器打开 <http://localhost:8000>。结束预览时在终端按 `Ctrl+C`。
+Open <http://localhost:8000> in your browser. Press `Ctrl+C` in the terminal to stop the server.
 
-## 补充公开信息
+## Public Metadata
 
-编辑 `site.config.js`：
+Edit `site.config.js` to add publication details:
 
-| 字段 | 内容 |
+| Field | Description |
 | --- | --- |
-| `authors` | 作者列表，每项包含 `name`，可选 `url` 和 `affiliations` |
-| `affiliations` | 单位名称列表，作者的单位编号从 1 开始 |
-| `arxivUrl` | 论文实际的 `https://arxiv.org/abs/...` 地址 |
-| `codeUrl` | 公开代码仓库地址 |
-| `paperUrl` | 默认使用 `assets/paper/scopd.pdf`，可改为公开论文地址 |
-| `year` | 确认后的发表年份 |
-| `citationKey` | BibTeX 引用键，默认 `scopd` |
+| `authors` | List of authors, each with a `name` and optional `url` and `affiliations` |
+| `affiliations` | List of institution names; author affiliation indices start at 1 |
+| `arxivUrl` | The paper's actual `https://arxiv.org/abs/...` URL |
+| `codeUrl` | URL of the public research code repository |
+| `paperUrl` | Defaults to `assets/paper/scopd.pdf`; can be replaced with a public paper URL |
+| `year` | Confirmed publication year |
+| `citationKey` | BibTeX citation key; defaults to `scopd` |
 
-作者格式示例：
+Example author configuration:
 
 ```js
 authors: [
@@ -35,34 +37,34 @@ authors: [
 affiliations: ['University Name'],
 ```
 
-空的可选信息会自动隐藏。补充真实作者、年份及有效 arXiv 地址后，页面会显示引用信息。不要把示例姓名或地址用作正式信息。
+Empty optional fields are automatically hidden. The citation section appears once actual authors, a publication year, and a valid arXiv URL are provided. Replace the example names and URLs with the correct publication details.
 
-当前下载文件是项目提供的预印本 PDF；网站本身不会上传论文到 arXiv，也不代表论文已经在 arXiv 发布。实际发布后填写 `arxivUrl` 即可启用对应入口。
+The downloadable file is a project-hosted preprint PDF. This website does not upload the paper to arXiv or imply that an arXiv version is already available. Set `arxivUrl` after publication to enable the arXiv link.
 
-## 发布到 GitHub Pages
+## Deploy to GitHub Pages
 
-1. 生成只包含公开页面文件的发布包：
+1. Generate a release archive containing only public site files:
 
    ```sh
    python scripts/package_site.py
    ```
 
-2. 将生成的 `site-release.zip` 解压到一个 GitHub 仓库的根目录，保留 `assets/` 目录结构及 `.nojekyll` 文件；根目录应直接包含 `index.html`。
-3. 提交并推送这些文件到仓库的 `main` 分支。
-4. 打开仓库 **Settings → Pages**，将 **Source** 设为 **Deploy from a branch**，选择 **main** 和 **/ (root)**，点击 **Save**。
-5. 等待部署完成，使用 Pages 设置中显示的网址访问。项目仓库通常对应 `https://用户名.github.io/仓库名/`。
+2. Extract `site-release.zip` into the root of a GitHub repository, preserving the `assets/` directory structure and `.nojekyll` file. The repository root should contain `index.html`.
+3. Commit and push these files to the repository's `main` branch.
+4. Open **Settings → Pages**, set **Source** to **Deploy from a branch**, select **main** and **/ (root)**, and click **Save**.
+5. Wait for deployment to finish, then visit the URL shown in the Pages settings. Project sites typically use `https://USERNAME.github.io/REPOSITORY/`.
 
-部署选项可参阅 [GitHub Pages 官方说明](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)。
+See the [GitHub Pages documentation](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site) for publishing options.
 
-打包脚本使用 Python 标准库和明确的文件白名单；缺少必需文件时会报错。发布包包含页面、脚本、样式及指定的公开图表和 PDF，不包含 `.local/` 中的工作文件或原始输入。新增公开资源时，同步更新 `scripts/package_site.py` 中的 `PUBLIC_FILES`。
+The packaging script uses the Python standard library and an explicit file allowlist. It reports an error if a required file is missing. The archive includes the page, scripts, styles, and specified public figures and PDF; it excludes working files in `.local/` and original inputs. When adding a public asset, also update `PUBLIC_FILES` in `scripts/package_site.py`.
 
-## 修改页面
+## Edit the Site
 
-- `index.html`：页面文字和结构。
-- `styles.css`：颜色、布局与移动端样式。
-- `script.js`：预算切换、图片放大和引用复制。
-- `results.data.js`：实验结果数据。
-- `assets/figures/`：论文图表。
-- `assets/paper/scopd.pdf`：公开预印本。
+- `index.html`: Page content and structure.
+- `styles.css`: Colors, layout, and responsive styles.
+- `script.js`: Token-budget switching, figure enlargement, and citation copying.
+- `results.data.js`: Experimental results.
+- `assets/figures/`: Paper figures.
+- `assets/paper/scopd.pdf`: Public preprint.
 
-页面布局参考 [AC3D](https://snap-research.github.io/ac3d/)，已在页脚注明。论文正文与图表的权利归原作者所有。
+The layout is inspired by [AC3D](https://snap-research.github.io/ac3d/), as credited in the page footer. Rights to the paper text and figures remain with their original authors.
