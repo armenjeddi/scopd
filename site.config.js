@@ -2,9 +2,9 @@
 // A link left empty ('') renders as a greyed-out "Soon" placeholder button.
 window.SCOPD_SITE = {
   links: {
-    arxiv: '',    // e.g. 'https://arxiv.org/abs/2610.12345'
-    code: '',     // e.g. 'https://github.com/armenjeddi/scopd-code'
-    hfPaper: '',  // e.g. 'https://huggingface.co/papers/2610.12345'
+    arxiv: 'https://arxiv.org/abs/2609.34044',
+    code: 'https://github.com/Enmingzz/scopd-repo',
+    huggingface: 'https://huggingface.co/enmingzhangzz/SCOPD',
   },
 
   // Affiliation numbers refer to the `affiliations` list below (1-based).
